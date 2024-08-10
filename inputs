@@ -1,1 +1,14 @@
+#VOCE COMO EXPERT EM MACHINE LEARNING# 
+
+Crie um modelo de IA feito em python, com as seguintes especificações:
+
+1 - Detecte objetos em imagem
+2 - Realiza contagens desses objetos
+3 - Crie um caminho para onde vou inserir as imagens para treinamento
+4 - Compilar dados e enviar para um banco de dados, My SQL 
+
+REALIZE O CODIGO EM PYTHON BIBLIOTEC YOLO4
+
+
+
 
