@@ -1,1 +1,107 @@
+Vamos criar um modelo de IA usando a biblioteca YOLOv4 em Python para detectar e contar objetos em imagens, além de enviar os dados para um banco de dados MySQL. Vou te fornecer um exemplo básico para começar.
 
+Passo 1: Instalar as bibliotecas necessárias
+Primeiro, instale as bibliotecas necessárias:
+
+pip install opencv-python-headless numpy mysql-connector-python
+
+
+Passo 2: Configurar YOLOv4
+Baixe os arquivos de configuração e pesos do YOLOv4:
+
+yolov4.cfg
+yolov4.weights
+coco.names
+Passo 3: Código Python
+Aqui está um exemplo de código para detectar e contar objetos em imagens e enviar os dados para um banco de dados MySQL:
+
+import cv2
+import numpy as np
+import mysql.connector
+
+# Conectar ao banco de dados MySQL
+db = mysql.connector.connect(
+    host="localhost",
+    user="seu_usuario",
+    password="sua_senha",
+    database="seu_banco_de_dados"
+)
+cursor = db.cursor()
+
+# Carregar YOLOv4
+net = cv2.dnn.readNet("yolov4.weights", "yolov4.cfg")
+layer_names = net.getLayerNames()
+output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+with open("coco.names", "r") as f:
+    classes = [line.strip() for line in f.readlines()]
+
+# Função para detectar objetos
+def detect_objects(img_path):
+    img = cv2.imread(img_path)
+    height, width, channels = img.shape
+
+    blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+    net.setInput(blob)
+    outs = net.forward(output_layers)
+
+    class_ids = []
+    confidences = []
+    boxes = []
+
+    for out in outs:
+        for detection in out:
+            scores = detection[5:]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
+            if confidence > 0.5:
+                center_x = int(detection[0] * width)
+                center_y = int(detection[1] * height)
+                w = int(detection[2] * width)
+                h = int(detection[3] * height)
+                x = int(center_x - w / 2)
+                y = int(center_y - h / 2)
+                boxes.append([x, y, w, h])
+                confidences.append(float(confidence))
+                class_ids.append(class_id)
+
+    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+    object_count = len(indexes)
+
+    # Inserir dados no banco de dados
+    sql = "INSERT INTO detections (image_path, object_count) VALUES (%s, %s)"
+    val = (img_path, object_count)
+    cursor.execute(sql, val)
+    db.commit()
+
+    return object_count
+
+# Exemplo de uso
+image_path = "caminho/para/sua/imagem.jpg"
+count = detect_objects(image_path)
+print(f"Objetos detectados: {count}")
+
+# Fechar conexão com o banco de dados
+cursor.close()
+db.close()
+
+
+
+
+Passo 4: Estrutura de Diretórios
+Crie uma estrutura de diretórios para armazenar suas imagens de treinamento:
+
+projeto/
+│
+├── imagens/
+│   ├── imagem1.jpg
+│   ├── imagem2.jpg
+│   └── ...
+├── yolov4.cfg
+├── yolov4.weights
+├── coco.names
+└── seu_script.py
+
+Passo 5: Executar o Código
+Execute o script Python para detectar objetos e enviar os dados para o banco de dados MySQL.
+
+Espero que isso te ajude a começar! Se precisar de mais alguma coisa, estou aqui para ajudar. 😊
